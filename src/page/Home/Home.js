@@ -75,7 +75,9 @@ function Home() {
     const [videos, setVideos] = useState([]);
 
     useEffect(() => {
-        fetchFromAPI(`playlistItems?playlistId=RDZiQo7nAkQHU&part=snippet`).then((data) => setVideos(data.items));
+        fetchFromAPI(`search?relatedToVideoId=7ghhRHRP6t4&part=snippet,id&type=video`).then((data) =>
+            setVideos(data.items),
+        );
     }, []);
     return (
         <>

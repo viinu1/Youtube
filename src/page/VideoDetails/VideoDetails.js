@@ -40,17 +40,19 @@ function VideoDetails() {
     const [videoDetails, setVideoDetails] = useState([]);
     const [inputComment, setInputComment] = useState('');
     const [open, setOpen] = useState(false);
-    const [like, setLike] = useState(0);
+
     const [click, setClick] = useState(false);
     const [clickDislike, setClickDislike] = useState(false);
+    const [comments, setComments] = useState([]);
 
     useEffect(() => {
-        fetchFromAPI(`search?q=${id}&part=snippet&regionCode=US&order=date`).then((data) => setVideos(data.items));
+        fetchFromAPI(`search?relatedToVideoId=${id}&part=snippet,id&type=video`).then((data) => setVideos(data.items));
         fetchFromAPI(`videos?part=contentDetails,snippet,statistics&id=${id}`).then((data) =>
             setVideoDetails(data.items[0]),
         );
+        fetchFromAPI(`commentThreads?videoId=${id}&part=snippet`).then((data) => setComments(data.items));
     }, [id]);
-
+    // console.log(comments);
     const handleFocus = () => {
         setOpen(true);
     };
@@ -58,24 +60,29 @@ function VideoDetails() {
         setOpen(false);
     };
 
-    const handleClickLike = () => {
-        setLike(like + 1);
-        setClick(true);
+    const handleClickLike = (id, like) => {
+        // comments.forEach((comment) => (comment.id !== id ? setClick(!click) : ''));
+
+        for (let i = 0; i < comments.length; i++) {
+            if (comments[i].id === id) {
+                setClick(true);
+            }
+        }
     };
     const handleClickDislikeLike = () => {
         setClickDislike(!clickDislike);
     };
     const handleClickDeleteLike = () => {
-        setLike(like - 1);
         setClick(false);
     };
+
     return (
         <Stack direction={{ xs: 'column', sm: 'row' }} gap={2} mt="24px">
             <Box sx={{ width: { md: '70%', sm: '70%' } }}>
                 <Card sx={{ boxShadow: 'none' }}>
                     <CardMedia
                         image={videoDetails?.snippet?.thumbnails?.medium?.url || videoBasic.urlBasic}
-                        alt={videoDetails.snippet?.title}
+                        alt={videoDetails?.snippet?.title}
                         sx={{ width: '100%', height: '400px', objectFit: 'contain' }}
                     />
                     <CardContent sx={{ p: 0 }}>
@@ -145,7 +152,7 @@ function VideoDetails() {
                 <Stack mt="24px">
                     <Stack mb="24px">
                         <Stack direction="row" alignItems="center" gap={3}>
-                            <Typography variant="body1">288 bình luận</Typography>
+                            <Typography variant="body1">{comments.length} bình luận</Typography>
                             <Button variant="text" startIcon={<Sort />}>
                                 Sắp xếp theo
                             </Button>
@@ -185,46 +192,69 @@ function VideoDetails() {
                         </Stack>
                     </Stack>
                     <Box>
-                        <Stack gap={2}>
-                            <Box sx={{ display: 'flex', gap: '10px' }}>
-                                <Avatar />
-                                <Box sx={{ marginRight: 'auto' }}>
-                                    <Box>
-                                        <Stack direction="row" alignItems="start" gap={1}>
-                                            <Typography variant="subtitle2">Stone</Typography>
-                                            <Typography variant="body2">1 năm trước</Typography>
-                                        </Stack>
+                        <Stack gap={2} direction="column">
+                            {comments.map((comment) => {
+                                var date = new Date();
+
+                                const dateComment = new Date(comment.snippet?.topLevelComment?.snippet?.publishedAt);
+                                const Day = (d1, d2) => {
+                                    let ms1 = d1.getTime();
+                                    let ms2 = d2.getTime();
+                                    return Math.ceil((ms2 - ms1) / (24 * 60 * 60 * 1000));
+                                };
+                                const result = Day(dateComment, date);
+                                return (
+                                    <Box sx={{ display: 'flex', gap: '10px', mb: '12px' }} key={comment.id}>
+                                        <Avatar
+                                            src={comment.snippet?.topLevelComment?.snippet?.authorProfileImageUrl}
+                                        />
+                                        <Box sx={{ marginRight: 'auto' }}>
+                                            <Box>
+                                                <Stack direction="row" alignItems="start" gap={1}>
+                                                    <Typography variant="subtitle2">
+                                                        {comment.snippet?.topLevelComment?.snippet?.authorDisplayName}
+                                                    </Typography>
+                                                    <Typography variant="body2">{result} Ngày trước</Typography>
+                                                </Stack>
+                                            </Box>
+                                            <Box>
+                                                <Typography variant="body1">
+                                                    {comment.snippet?.topLevelComment?.snippet?.textDisplay}
+                                                </Typography>
+                                            </Box>
+                                            <Box>
+                                                <Tooltip title="thích">
+                                                    <Button variant="text" sx={{ p: '6px 0' }}>
+                                                        {!click ? (
+                                                            <ThumbUpOutlined
+                                                                onClick={() =>
+                                                                    handleClickLike(
+                                                                        comment.id,
+                                                                        comment.snippet?.topLevelComment?.snippet
+                                                                            ?.likeCount,
+                                                                    )
+                                                                }
+                                                            />
+                                                        ) : (
+                                                            <ThumbUpSharp onClick={handleClickDeleteLike} />
+                                                        )}
+                                                        {comment.snippet?.topLevelComment?.snippet?.likeCount}
+                                                    </Button>
+                                                </Tooltip>
+                                                <Tooltip title="Không thích">
+                                                    <Button variant="text" onClick={handleClickDislikeLike}>
+                                                        {!clickDislike ? <ThumbDownOutlined /> : <ThumbDownSharp />}
+                                                    </Button>
+                                                </Tooltip>
+                                                <Button sx={{ textTransform: 'capitalize' }} variant="text">
+                                                    Phản hồi
+                                                </Button>
+                                            </Box>
+                                        </Box>
+                                        <MoreVertOutlined />
                                     </Box>
-                                    <Box>
-                                        <Typography variant="body1">
-                                            Tôi đã quá quen với hình ảnh Bray rap diss và beff.Nhưng sau khi xem xong
-                                            vid này thì đã có góc nhìn khác về Bray.Một rapper đa nhiệm,đúng như câu nói
-                                            của anh ấy "nhạc thị trường hay underoungh tôi nuốt trọn" Respest Bray.
-                                        </Typography>
-                                    </Box>
-                                    <Box>
-                                        <Tooltip title="thích">
-                                            <Button variant="text" sx={{ p: '6px 0' }}>
-                                                {!click ? (
-                                                    <ThumbUpOutlined onClick={handleClickLike} />
-                                                ) : (
-                                                    <ThumbUpSharp onClick={handleClickDeleteLike} />
-                                                )}
-                                                {like}
-                                            </Button>
-                                        </Tooltip>
-                                        <Tooltip title="Không thích">
-                                            <Button variant="text" onClick={handleClickDislikeLike}>
-                                                {!clickDislike ? <ThumbDownOutlined /> : <ThumbDownSharp />}
-                                            </Button>
-                                        </Tooltip>
-                                        <Button sx={{ textTransform: 'capitalize' }} variant="text">
-                                            Phản hồi
-                                        </Button>
-                                    </Box>
-                                </Box>
-                                <MoreVertOutlined />
-                            </Box>
+                                );
+                            })}
                         </Stack>
                     </Box>
                 </Stack>

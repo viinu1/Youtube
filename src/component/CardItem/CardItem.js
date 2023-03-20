@@ -3,9 +3,13 @@ import { Card, CardContent, CardMedia, Typography } from '@mui/material';
 import { Link } from 'react-router-dom';
 
 function CardItem({ data, videoBasic }) {
+    console.log(data);
     return (
         <Card sx={{ width: { md: '320px', xs: '100%' }, boxShadow: 'none' }}>
-            <Link to={data?.id ? `/videos/${data.id}` : '/videos/vanvi'} style={{ textDecoration: 'none ' }}>
+            <Link
+                to={data?.id?.videoId ? `/videos/${data.id.videoId}` : '/videos/vanvi'}
+                style={{ textDecoration: 'none ' }}
+            >
                 <CardMedia
                     image={data?.snippet?.thumbnails?.medium?.url || videoBasic.urlBasic}
                     alt={data?.snippet?.title}
@@ -13,7 +17,10 @@ function CardItem({ data, videoBasic }) {
                 />
             </Link>
             <CardContent sx={{ p: 0 }}>
-                <Link to={data?.id ? `/videos/${data.id}` : '/videos/vanvi'} style={{ textDecoration: 'none ' }}>
+                <Link
+                    to={data?.id?.videoId ? `/videos/${data.id.videoId}` : '/videos/vanvi'}
+                    style={{ textDecoration: 'none ' }}
+                >
                     <Typography variant="body1" fontWeight={500} color="#000" fontSize="16px">
                         {data?.snippet?.title || videoBasic.title}
                     </Typography>
