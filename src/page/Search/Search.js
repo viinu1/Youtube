@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { fetchFromAPI } from '../../API/fetchFromAPI';
 
+// import { videoBasic } from '../../API/basic';
 function Search({ data }) {
     const { id } = useParams();
     const [results, setResults] = useState([]);
@@ -30,7 +31,7 @@ function Search({ data }) {
                     square
                     key={index}
                 >
-                    <Paper component="img" src={item.snippet?.thumbnails?.high?.url} sx={{ width: '30%' }} />
+                    <Paper component="video" src={item.snippet?.thumbnails?.high?.url} sx={{ width: '30%' }} />
 
                     <Box>
                         <Link

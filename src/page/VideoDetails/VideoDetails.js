@@ -1,22 +1,19 @@
+import { useEffect, useRef, useState } from 'react';
 import {
     CheckCircle,
     MoreVertOutlined,
     ReplyAllOutlined,
-    SentimentVerySatisfiedOutlined,
-    Sort,
     ThumbDownOutlined,
-    ThumbDownSharp,
     ThumbUpOutlined,
-    ThumbUpSharp,
 } from '@mui/icons-material';
-import { Avatar, Button, Card, CardContent, CardMedia, Input, Paper, styled, Tooltip, Typography } from '@mui/material';
-import FocusTrap from '@mui/base/FocusTrap';
+import { Avatar, Button, Card, CardContent, CardMedia, Paper, styled, Tooltip, Typography } from '@mui/material';
 import { Box, Stack } from '@mui/system';
-import { useEffect, useState } from 'react';
 // import { Link, useParams } from 'react-router-dom';
+
 import { fetchFromAPI } from '../../API/fetchFromAPI';
 import { videoBasic } from '../../API/basic';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
+import Comment from '../../component/Comment';
 
 const MyButton = styled(Button)(({ theme }) => ({
     backgroundColor: '#0000000d',
@@ -38,52 +35,42 @@ function VideoDetails() {
     const { id } = useParams();
     const [videos, setVideos] = useState([]);
     const [videoDetails, setVideoDetails] = useState([]);
-    const [inputComment, setInputComment] = useState('');
-    const [open, setOpen] = useState(false);
 
-    const [click, setClick] = useState(false);
-    const [clickDislike, setClickDislike] = useState(false);
-    const [comments, setComments] = useState([]);
+    const videoRef = useRef(null);
+
+    const handleMouseEnter = () => {
+        videoRef.current.play();
+    };
+    const handleMouseLeave = () => {
+        videoRef.current.currentTime = 0;
+        videoRef.current.pause();
+    };
 
     useEffect(() => {
-        fetchFromAPI(`search?relatedToVideoId=${id}&part=snippet,id&type=video`).then((data) => setVideos(data.items));
-        fetchFromAPI(`videos?part=contentDetails,snippet,statistics&id=${id}`).then((data) =>
-            setVideoDetails(data.items[0]),
-        );
-        fetchFromAPI(`commentThreads?videoId=${id}&part=snippet`).then((data) => setComments(data.items));
+        try {
+            fetchFromAPI(`search?relatedToVideoId=${id}&part=snippet,id&type=video`).then((data) =>
+                setVideos(data.items),
+            );
+            fetchFromAPI(`videos?part=contentDetails,snippet,statistics&id=${id}`).then((data) =>
+                setVideoDetails(data.items[0]),
+            );
+        } catch (error) {
+            console.log('call api thất bại');
+        }
     }, [id]);
     // console.log(comments);
-    const handleFocus = () => {
-        setOpen(true);
-    };
-    const handleCLose = () => {
-        setOpen(false);
-    };
-
-    const handleClickLike = (id, like) => {
-        // comments.forEach((comment) => (comment.id !== id ? setClick(!click) : ''));
-
-        for (let i = 0; i < comments.length; i++) {
-            if (comments[i].id === id) {
-                setClick(true);
-            }
-        }
-    };
-    const handleClickDislikeLike = () => {
-        setClickDislike(!clickDislike);
-    };
-    const handleClickDeleteLike = () => {
-        setClick(false);
-    };
 
     return (
         <Stack direction={{ xs: 'column', sm: 'row' }} gap={2} mt="24px">
-            <Box sx={{ width: { md: '70%', sm: '70%' } }}>
-                <Card sx={{ boxShadow: 'none' }}>
+            <Box sx={{ width: { md: '65%', sm: '70%' } }}>
+                <Card sx={{ boxShadow: 'none', width: '100%' }}>
                     <CardMedia
-                        image={videoDetails?.snippet?.thumbnails?.medium?.url || videoBasic.urlBasic}
+                        controls
+                        src={videoBasic.src}
+                        component="video"
+                        // image={videoDetails?.snippet?.thumbnails?.medium?.url || videoBasic.urlBasic}
                         alt={videoDetails?.snippet?.title}
-                        sx={{ width: '100%', height: '400px', objectFit: 'contain' }}
+                        sx={{ width: '100%', height: 'auto' }}
                     />
                     <CardContent sx={{ p: 0 }}>
                         <Typography variant="body1" fontSize="20px" fontWeight="500">
@@ -150,116 +137,10 @@ function VideoDetails() {
                 </Box>
 
                 <Stack mt="24px">
-                    <Stack mb="24px">
-                        <Stack direction="row" alignItems="center" gap={3}>
-                            <Typography variant="body1">{comments.length} bình luận</Typography>
-                            <Button variant="text" startIcon={<Sort />}>
-                                Sắp xếp theo
-                            </Button>
-                        </Stack>
-                        <Stack direction="row" alignItems="start" gap={3}>
-                            <Avatar />
-                            <Box sx={{ width: '100%' }}>
-                                <Input
-                                    placeholder="Viết bình luận..."
-                                    sx={{ width: '100%' }}
-                                    onChange={(e) => setInputComment(e.target.value)}
-                                    onClick={handleFocus}
-                                />
-                                {open && (
-                                    <FocusTrap disableAutoFocus open>
-                                        <Stack
-                                            tabIndex={-1}
-                                            direction="row"
-                                            justifyContent="space-between"
-                                            width="80%"
-                                            mt="12px"
-                                        >
-                                            <SentimentVerySatisfiedOutlined />
-                                            <MyButton onClick={handleCLose} variant="text" sx={{ marginLeft: 'auto' }}>
-                                                hủy
-                                            </MyButton>
-                                            <MyButton
-                                                disabled={inputComment.length > 0 ? false : true}
-                                                sx={{ marginLeft: '12px' }}
-                                            >
-                                                Bình luận
-                                            </MyButton>
-                                        </Stack>
-                                    </FocusTrap>
-                                )}
-                            </Box>
-                        </Stack>
-                    </Stack>
-                    <Box>
-                        <Stack gap={2} direction="column">
-                            {comments.map((comment) => {
-                                var date = new Date();
-
-                                const dateComment = new Date(comment.snippet?.topLevelComment?.snippet?.publishedAt);
-                                const Day = (d1, d2) => {
-                                    let ms1 = d1.getTime();
-                                    let ms2 = d2.getTime();
-                                    return Math.ceil((ms2 - ms1) / (24 * 60 * 60 * 1000));
-                                };
-                                const result = Day(dateComment, date);
-                                return (
-                                    <Box sx={{ display: 'flex', gap: '10px', mb: '12px' }} key={comment.id}>
-                                        <Avatar
-                                            src={comment.snippet?.topLevelComment?.snippet?.authorProfileImageUrl}
-                                        />
-                                        <Box sx={{ marginRight: 'auto' }}>
-                                            <Box>
-                                                <Stack direction="row" alignItems="start" gap={1}>
-                                                    <Typography variant="subtitle2">
-                                                        {comment.snippet?.topLevelComment?.snippet?.authorDisplayName}
-                                                    </Typography>
-                                                    <Typography variant="body2">{result} Ngày trước</Typography>
-                                                </Stack>
-                                            </Box>
-                                            <Box>
-                                                <Typography variant="body1">
-                                                    {comment.snippet?.topLevelComment?.snippet?.textDisplay}
-                                                </Typography>
-                                            </Box>
-                                            <Box>
-                                                <Tooltip title="thích">
-                                                    <Button variant="text" sx={{ p: '6px 0' }}>
-                                                        {!click ? (
-                                                            <ThumbUpOutlined
-                                                                onClick={() =>
-                                                                    handleClickLike(
-                                                                        comment.id,
-                                                                        comment.snippet?.topLevelComment?.snippet
-                                                                            ?.likeCount,
-                                                                    )
-                                                                }
-                                                            />
-                                                        ) : (
-                                                            <ThumbUpSharp onClick={handleClickDeleteLike} />
-                                                        )}
-                                                        {comment.snippet?.topLevelComment?.snippet?.likeCount}
-                                                    </Button>
-                                                </Tooltip>
-                                                <Tooltip title="Không thích">
-                                                    <Button variant="text" onClick={handleClickDislikeLike}>
-                                                        {!clickDislike ? <ThumbDownOutlined /> : <ThumbDownSharp />}
-                                                    </Button>
-                                                </Tooltip>
-                                                <Button sx={{ textTransform: 'capitalize' }} variant="text">
-                                                    Phản hồi
-                                                </Button>
-                                            </Box>
-                                        </Box>
-                                        <MoreVertOutlined />
-                                    </Box>
-                                );
-                            })}
-                        </Stack>
-                    </Box>
+                    <Comment id={id} />
                 </Stack>
             </Box>
-            <Box sx={{ width: { md: '30%', sm: '30%' } }}>
+            <Box sx={{ width: { md: '35%', sm: '30%' } }}>
                 {videos.map((data, index) => (
                     <Paper
                         index={index}
@@ -277,27 +158,71 @@ function VideoDetails() {
                     >
                         <Paper
                             component="img"
-                            src={data?.snippet?.thumbnails?.medium?.url || videoBasic.urlBasic}
+                            src={data.snippet?.thumbnails?.medium?.url || videoBasic.urlBasic}
                             sx={{ width: '50%' }}
                         />
+
                         <Box>
-                            <Typography
-                                sx={{ height: '28px', lineHeight: '14px', overflow: 'hidden' }}
-                                variant="body1"
-                                fontSize="14px"
+                            <Link to={data?.id?.videoId ? `/videos/${data.id.videoId}` : '/videos/vanvi'}>
+                                <Typography
+                                    sx={{ height: '28px', lineHeight: '14px', overflow: 'hidden' }}
+                                    variant="body1"
+                                    fontSize="14px"
+                                >
+                                    {data?.snippet?.title || videoBasic.title}
+                                </Typography>
+                            </Link>
+                            <Link
+                                to={data?.snippet?.channelId ? `/channel/${data.snippet.channelId}` : '/videos/vanvi'}
                             >
-                                {data?.snippet?.title || videoBasic.title}
-                            </Typography>
-                            <Typography m="6px 0" fontSize="12px" variant="body2">
-                                {data?.snippet?.channelTitle || videoBasic.channel}
-                                <CheckCircle sx={{ color: 'blue', fontSize: '12px', ml: '5px' }} />
-                            </Typography>
+                                <Typography m="6px 0" fontSize="12px" variant="body2">
+                                    {data?.snippet?.channelTitle || videoBasic.channel}
+                                    <CheckCircle sx={{ color: 'blue', fontSize: '12px', ml: '5px' }} />
+                                </Typography>
+                            </Link>
                             <Typography fontSize="12px" variant="body2">
                                 1,1tr Lượt xem 2 năm trước
                             </Typography>
                         </Box>
                     </Paper>
                 ))}
+
+                <Card
+                    onMouseEnter={handleMouseEnter}
+                    onMouseLeave={handleMouseLeave}
+                    sx={{ width: { md: '100%', xs: '100%' }, boxShadow: 'none', display: 'flex', gap: '12px', m: 0 }}
+                >
+                    <Link style={{ textDecoration: 'none ' }}>
+                        <CardMedia
+                            ref={videoRef}
+                            component="video"
+                            src={videoBasic.src}
+                            sx={{ width: '100%', height: '100px', borderRadius: '4px' }}
+                            muted
+                        />
+                    </Link>
+                    <CardContent sx={{ p: 0, flex: 1 }}>
+                        <Link style={{ textDecoration: 'none ', color: '#000' }}>
+                            <Typography
+                                sx={{ height: '28px', lineHeight: '14px', overflow: 'hidden' }}
+                                variant="body1"
+                                fontWeight="500"
+                                fontSize="14px"
+                            >
+                                Video Thỏ xinh xắn nhất quả đất này nè
+                            </Typography>
+                        </Link>
+                        <Link style={{ textDecoration: 'none ', color: '#000' }}>
+                            <Typography m="6px 0" fontSize="12px" variant="body2">
+                                Van Vi Vlog
+                                <CheckCircle sx={{ color: 'blue', fontSize: '12px', ml: '5px' }} />
+                            </Typography>
+                        </Link>
+                        <Typography fontSize="12px" variant="body2" color="#000">
+                            1tr lượt xem
+                        </Typography>
+                    </CardContent>
+                </Card>
             </Box>
         </Stack>
     );

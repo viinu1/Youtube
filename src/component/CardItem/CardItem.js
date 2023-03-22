@@ -1,19 +1,43 @@
 import { CheckCircle } from '@mui/icons-material';
 import { Card, CardContent, CardMedia, Typography } from '@mui/material';
+// import { styled } from '@mui/system';
 import { Link } from 'react-router-dom';
 
-function CardItem({ data, videoBasic }) {
-    console.log(data);
+import { useRef } from 'react';
+
+// const MyCardMedia = styled(CardMedia)(({ theme }) => ({
+//     width: '100%',
+//     height: '180px',
+//     objectFit: 'contain',
+// }));
+
+function CardItem({ data, videoBasic, className }) {
+    const videoRef = useRef(null);
+
+    const handleMouseEnter = () => {
+        videoRef.current.play();
+    };
+    const handleMouseLeave = () => {
+        videoRef.current.currentTime = 0;
+        videoRef.current.pause();
+    };
     return (
-        <Card sx={{ width: { md: '320px', xs: '100%' }, boxShadow: 'none' }}>
+        <Card
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+            sx={{ width: { md: '330px', xs: '100%' }, boxShadow: 'none' }}
+        >
             <Link
                 to={data?.id?.videoId ? `/videos/${data.id.videoId}` : '/videos/vanvi'}
                 style={{ textDecoration: 'none ' }}
             >
                 <CardMedia
-                    image={data?.snippet?.thumbnails?.medium?.url || videoBasic.urlBasic}
+                    component="video"
+                    src={videoBasic.src}
                     alt={data?.snippet?.title}
-                    sx={{ width: '358px', height: '180px' }}
+                    sx={{ width: '320px', height: '180px' }}
+                    ref={videoRef}
+                    muted
                 />
             </Link>
             <CardContent sx={{ p: 0 }}>
@@ -21,7 +45,13 @@ function CardItem({ data, videoBasic }) {
                     to={data?.id?.videoId ? `/videos/${data.id.videoId}` : '/videos/vanvi'}
                     style={{ textDecoration: 'none ' }}
                 >
-                    <Typography variant="body1" fontWeight={500} color="#000" fontSize="16px">
+                    <Typography
+                        variant="body1"
+                        fontWeight={500}
+                        color="#000"
+                        fontSize="16px"
+                        sx={{ height: '32px', lineHeight: '16px', overflow: 'hidden', mt: 1.2 }}
+                    >
                         {data?.snippet?.title || videoBasic.title}
                     </Typography>
                 </Link>
@@ -34,6 +64,9 @@ function CardItem({ data, videoBasic }) {
                         <CheckCircle sx={{ color: 'blue', fontSize: '12px', ml: '5px' }} />
                     </Typography>
                 </Link>
+                <Typography variant="body1" fontWeight={300} color="#000" fontSize="12px">
+                    18N Lượt xem 2 ngày trước
+                </Typography>
             </CardContent>
         </Card>
     );

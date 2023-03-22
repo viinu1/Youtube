@@ -75,10 +75,15 @@ function Home() {
     const [videos, setVideos] = useState([]);
 
     useEffect(() => {
-        fetchFromAPI(`search?relatedToVideoId=7ghhRHRP6t4&part=snippet,id&type=video`).then((data) =>
-            setVideos(data.items),
-        );
+        try {
+            fetchFromAPI(`search?relatedToVideoId=7ghhRHRP6t4&part=snippet,id&type=video`).then((data) =>
+                setVideos(data.items),
+            );
+        } catch (error) {
+            console.log('call api thất bại');
+        }
     }, []);
+    // console.log(videos);
     return (
         <>
             <Box sx={{ mb: '50px' }}>
@@ -108,7 +113,7 @@ function Home() {
                     ))}
                 </Paper>
             </Box>
-            <Stack direction="row" flexWrap="wrap" justifyContent="start" gap={2}>
+            <Stack direction="row" flexWrap="wrap" justifyContent="start" gap={2} ml={1.2}>
                 {videos.length > 0 ? (
                     videos.map((item, index) => (
                         <Box key={index}>
